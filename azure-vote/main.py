@@ -22,18 +22,18 @@ from opencensus.ext.flask.flask_middleware import FlaskMiddleware
 
 # Logging
 logger = logging.getLogger(__name__)
-logger.addHandler(AzureLogHandler(connection_string='InstrumentationKey=2e018a9c-a773-4097-8f89-510b0688c418'))
-logger.addHandler(AzureEventHandler(connection_string='InstrumentationKey=2e018a9c-a773-4097-8f89-510b0688c418'))
+logger.addHandler(AzureLogHandler(connection_string='InstrumentationKey=47c441fd-dabf-40c8-a53f-63d2aad7728a'))
+logger.addHandler(AzureEventHandler(connection_string='InstrumentationKey=47c441fd-dabf-40c8-a53f-63d2aad7728a'))
 
 # Metrics
 exporter = exporter = metrics_exporter.new_metrics_exporter(
   enable_standard_metrics=True,
-  connection_string='InstrumentationKey=2e018a9c-a773-4097-8f89-510b0688c418')
+  connection_string='InstrumentationKey=47c441fd-dabf-40c8-a53f-63d2aad7728a')
 
 # Tracing
 tracer = Tracer(
     exporter=AzureExporter(
-        connection_string='InstrumentationKey=2e018a9c-a773-4097-8f89-510b0688c418'),
+        connection_string='InstrumentationKey=47c441fd-dabf-40c8-a53f-63d2aad7728a'),
     sampler=ProbabilitySampler(1.0),
 )
 
@@ -42,7 +42,7 @@ app = Flask(__name__)
 # Requests
 middleware = middleware = FlaskMiddleware(
     app,
-    exporter=AzureExporter(connection_string="InstrumentationKey=2e018a9c-a773-4097-8f89-510b0688c418"),
+    exporter=AzureExporter(connection_string="InstrumentationKey=47c441fd-dabf-40c8-a53f-63d2aad7728a"),
     sampler=ProbabilitySampler(rate=1.0),
 )
 
@@ -113,7 +113,9 @@ def index():
 
             # Insert vote result into DB
             vote = request.form['vote']
-            r.incr(vote,1)
+            with tracer.span(name="vote {} clicked".format(vote)) as span:
+                r.incr(vote,1)
+                logger.warning("{} voted".format(vote))
 
             # Get current values
             vote1 = r.get(button1).decode('utf-8')
